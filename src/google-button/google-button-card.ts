@@ -2,7 +2,7 @@ import { html, css, LitElement, TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { localize } from "../localize/localize";
 import { DEFAULT_BTN_CONFIG } from "../google-slider/const";
-import { fireEvent } from "custom-card-helpers";
+import { fireEvent, handleActionConfig, ActionConfig } from "custom-card-helpers";
 import { HomeAssistant } from "../ha-types";
 import { applyRippleEffect } from "../utils";
 import {
@@ -100,6 +100,14 @@ export class GoogleButtonCard extends LitElement {
 
     const isDefaultToggle = this._config.use_default_toggle ?? true;
 
+    // Check if tap_action is defined and is an ActionConfig object
+    if (this._config.tap_action && typeof this._config.tap_action === "object") {
+      // Use the new ActionConfig system
+      handleActionConfig(this, this.hass as any, { entity: entityId }, this._config.tap_action as ActionConfig);
+      return;
+    }
+
+    // Legacy behavior for backward compatibility
     if (isDefaultToggle) {
       const isToggleable =
         toggleDomains.includes(domain) &&
@@ -122,6 +130,7 @@ export class GoogleButtonCard extends LitElement {
       }
     }
 
+    // Legacy Action enum handling
     const actionOnTap = this._config.tap_action;
 
     if (actionOnTap === Action.CLICK) {
@@ -201,6 +210,13 @@ export class GoogleButtonCard extends LitElement {
 
     // Se non è definito un entityId, esci
     if (!entityId) return;
+
+    // Check if hold_action is defined and is an ActionConfig object
+    if (this._config.hold_action && typeof this._config.hold_action === "object") {
+      // Use the new ActionConfig system
+      handleActionConfig(this, this.hass as any, { entity: entityId }, this._config.hold_action as ActionConfig);
+      return;
+    }
 
     const domain = entityId.split(".")[0];
     const toggleDomains = [
